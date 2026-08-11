@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Trains
 
 final class TrainsTests: XCTestCase {
