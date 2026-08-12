@@ -7,15 +7,7 @@ protocol ScheduleBetweenStationsServiceProtocol {
     func getSchedule(from: String, to: String, date: String) async throws -> ScheduleBetweenStations
 }
 
-final class ScheduleBetweenStationsService: ScheduleBetweenStationsServiceProtocol {
-    private let client: Client
-    private let apiKey: String
-
-    init(client: Client, apiKey: String) {
-        self.client = client
-        self.apiKey = apiKey
-    }
-
+final class ScheduleBetweenStationsService: BaseAPIService, ScheduleBetweenStationsServiceProtocol {
     func getSchedule(from: String, to: String, date: String) async throws -> ScheduleBetweenStations {
         let response = try await client.getSchedualBetweenStations(query: .init(
             apikey: apiKey,

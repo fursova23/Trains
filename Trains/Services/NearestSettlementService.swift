@@ -7,15 +7,7 @@ protocol NearestSettlementServiceProtocol {
     func getNearestSettlement(lat: Double, lng: Double) async throws -> NearestSettlement
 }
 
-final class NearestSettlementService: NearestSettlementServiceProtocol {
-    private let client: Client
-    private let apiKey: String
-
-    init(client: Client, apiKey: String) {
-        self.client = client
-        self.apiKey = apiKey
-    }
-
+final class NearestSettlementService: BaseAPIService, NearestSettlementServiceProtocol {
     func getNearestSettlement(lat: Double, lng: Double) async throws -> NearestSettlement {
         let response = try await client.getNearestCity(query: .init(
             apikey: apiKey,
