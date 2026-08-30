@@ -1,20 +1,17 @@
 import SwiftUI
 
 struct SearchableSelectionView<Item: Identifiable>: View where Item.ID: Hashable {
-    let title: String
-    let items: [Item]
-    let itemTitle: (Item) -> String
-    let emptyMessage: String
+    let configuration: SearchableSelectionConfiguration<Item>
     let onBack: () -> Void
     let onSelect: (Item) -> Void
 
     @State private var query = ""
 
     private var filteredItems: [Item] {
-        guard !query.isEmpty else { return items }
+        guard !query.isEmpty else { return configuration.items }
 
-        return items.filter {
-            itemTitle($0).localizedCaseInsensitiveContains(query)
+        return configuration.items.filter {
+            title(for: $0).localizedCaseInsensitiveContains(query)
         }
     }
 
@@ -28,7 +25,7 @@ struct SearchableSelectionView<Item: Identifiable>: View where Item.ID: Hashable
             if filteredItems.isEmpty {
                 Spacer()
 
-                Text(emptyMessage)
+                Text(configuration.emptyMessage)
                     .font(.system(size: 24, weight: .bold))
                     .multilineTextAlignment(.center)
 
@@ -41,7 +38,7 @@ struct SearchableSelectionView<Item: Identifiable>: View where Item.ID: Hashable
                                 onSelect(item)
                             } label: {
                                 HStack(spacing: 12) {
-                                    Text(itemTitle(item))
+                                    Text(title(for: item))
                                         .font(.system(size: 17))
                                         .foregroundStyle(.primary)
                                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -68,7 +65,7 @@ struct SearchableSelectionView<Item: Identifiable>: View where Item.ID: Hashable
 
     private var header: some View {
         ZStack {
-            Text(title)
+            Text(configuration.title)
                 .font(.system(size: 17, weight: .bold))
 
             HStack {
@@ -78,5 +75,9 @@ struct SearchableSelectionView<Item: Identifiable>: View where Item.ID: Hashable
         }
         .frame(height: 50)
         .padding(.horizontal, 8)
+    }
+
+    private func title(for item: Item) -> String {
+        item[keyPath: configuration.itemTitle]
     }
 }

@@ -11,22 +11,24 @@ struct CitySelectionFlow: View {
     var body: some View {
         NavigationStack(path: $path) {
             cityContent
-            .navigationDestination(for: City.self) { city in
-                SearchableSelectionView(
-                    title: "Выбор станции",
-                    items: city.stations,
-                    itemTitle: \.name,
-                    emptyMessage: "Станция не найдена",
-                    onBack: { path.removeLast() },
-                    onSelect: { station in
-                        onComplete(RoutePoint(
-                            city: city.name,
-                            station: station.name,
-                            stationCode: station.code
-                        ))
-                    }
-                )
-            }
+                .navigationDestination(for: City.self) { city in
+                    SearchableSelectionView(
+                        configuration: SearchableSelectionConfiguration(
+                            title: "Выбор станции",
+                            items: city.stations,
+                            itemTitle: \.name,
+                            emptyMessage: "Станция не найдена"
+                        ),
+                        onBack: { path.removeLast() },
+                        onSelect: { station in
+                            onComplete(RoutePoint(
+                                city: city.name,
+                                station: station.name,
+                                stationCode: station.code
+                            ))
+                        }
+                    )
+                }
         }
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
@@ -44,10 +46,12 @@ struct CitySelectionFlow: View {
             }
         case .loaded:
             SearchableSelectionView(
-                title: "Выбор города",
-                items: viewModel.cities,
-                itemTitle: \.name,
-                emptyMessage: "Город не найден",
+                configuration: SearchableSelectionConfiguration(
+                    title: "Выбор города",
+                    items: viewModel.cities,
+                    itemTitle: \.name,
+                    emptyMessage: "Город не найден"
+                ),
                 onBack: { dismiss() },
                 onSelect: { path.append($0) }
             )

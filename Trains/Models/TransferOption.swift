@@ -1,13 +1,13 @@
 enum TransferOption: String, CaseIterable, Identifiable {
-    case yes
-    case no
+    case withTransfers
+    case withoutTransfers
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .yes: "Да"
-        case .no: "Нет"
+        case .withTransfers: "Да"
+        case .withoutTransfers: "Нет"
         }
     }
 }

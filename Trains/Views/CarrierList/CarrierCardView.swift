@@ -59,3 +59,51 @@ struct CarrierCardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 }
+
+#Preview("Без пересадки") {
+    CarrierCardView(trip: CarrierCardPreviewData.directTrip)
+        .padding()
+        .background(Color("ScheduleBackground"))
+}
+
+#Preview("С пересадкой") {
+    CarrierCardView(trip: CarrierCardPreviewData.transferTrip)
+        .padding()
+        .background(Color("ScheduleBackground"))
+}
+
+private enum CarrierCardPreviewData {
+    static let directTrip = makeTrip(
+        id: "direct",
+        carrierName: "ФГК",
+        duration: 9 * 3_600,
+        hasTransfer: false
+    )
+
+    static let transferTrip = makeTrip(
+        id: "transfer",
+        carrierName: "РЖД",
+        duration: 20 * 3_600,
+        hasTransfer: true
+    )
+
+    private static func makeTrip(
+        id: String,
+        carrierName: String,
+        duration: Int,
+        hasTransfer: Bool
+    ) -> CarrierTrip {
+        let departure = Date.now
+
+        return CarrierTrip(
+            id: id,
+            carrierCode: nil,
+            carrierName: carrierName,
+            logoURL: nil,
+            departure: departure,
+            arrival: departure.addingTimeInterval(TimeInterval(duration)),
+            duration: duration,
+            hasTransfer: hasTransfer
+        )
+    }
+}

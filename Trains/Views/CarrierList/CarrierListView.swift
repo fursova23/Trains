@@ -16,9 +16,9 @@ struct CarrierListView: View {
 
             let matchesTransfer: Bool
             switch filter.transferOption {
-            case .yes:
+            case .withTransfers:
                 matchesTransfer = trip.hasTransfer
-            case .no:
+            case .withoutTransfers:
                 matchesTransfer = !trip.hasTransfer
             case nil:
                 matchesTransfer = true
