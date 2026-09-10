@@ -16,9 +16,12 @@ struct MainView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            StoriesCollectionView(stories: Story.mocks)
+                .padding(.top, 24)
+
             routeSelector
                 .padding(.horizontal, 16)
-                .padding(.top, 24)
+                .padding(.top, 44)
 
             if isRouteComplete {
                 Button {
@@ -75,7 +78,7 @@ struct MainView: View {
                 Image("swap_button")
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(Color("BrandBlue"))
-                    .frame(width: 44, height: 44)
+                    .frame(width: 36, height: 36)
                     .background(Color.white)
                     .clipShape(Circle())
             }
@@ -100,7 +103,7 @@ struct MainView: View {
                 .foregroundStyle(titleColor)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(height: 56)
+                .frame(height: 48)
                 .padding(.horizontal, 16)
                 .contentShape(Rectangle())
         }

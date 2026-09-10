@@ -861,6 +861,9 @@ components:
     CarrierResponse:
       type: object
       properties:
+        carrier:
+          description: Перевозчик при запросе по коду Яндекс Расписаний
+          $ref: '#/components/schemas/Carrier'
         carriers:
           type: array
           items:

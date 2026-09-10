@@ -1,11 +1,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage(AppSettings.darkThemeKey) private var isDarkThemeEnabled = false
     @State private var isSplashVisible = true
 
     var body: some View {
         ZStack {
             RootTabView()
+                .allowsHitTesting(!isSplashVisible)
+                .accessibilityHidden(isSplashVisible)
 
             if isSplashVisible {
                 SplashView()
@@ -13,6 +16,7 @@ struct ContentView: View {
                     .zIndex(1)
             }
         }
+        .preferredColorScheme(isDarkThemeEnabled ? .dark : .light)
         .task {
             guard isSplashVisible else { return }
 

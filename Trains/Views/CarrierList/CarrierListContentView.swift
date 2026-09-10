@@ -23,10 +23,7 @@ struct CarrierListContentView: View {
                         LazyVStack(spacing: 8) {
                             ForEach(trips) { trip in
                                 NavigationLink {
-                                    PlaceholderView(
-                                        title: "Карточка перевозчика",
-                                        showsBackButton: true
-                                    )
+                                    CarrierDetailsView(trip: trip)
                                     .toolbar(.hidden, for: .tabBar)
                                 } label: {
                                     CarrierCardView(trip: trip)
