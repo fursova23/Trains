@@ -8,16 +8,18 @@ struct RootTabView: View {
             ScheduleFlowView()
                 .tabItem {
                     Image(systemName: "arrow.up.message.fill")
+                        .accessibilityLabel("Расписание")
                 }
                 .accessibilityLabel("Расписание")
                 .tag(AppTab.schedule)
 
             NavigationStack {
-                PlaceholderView(title: "Настройки")
+                SettingsView()
             }
             .toolbar(.hidden, for: .navigationBar)
             .tabItem {
                 Image(systemName: "gearshape.fill")
+                    .accessibilityLabel("Настройки")
             }
             .accessibilityLabel("Настройки")
             .tag(AppTab.settings)
@@ -25,12 +27,14 @@ struct RootTabView: View {
     }
 }
 
-#Preview("Главная — светлая") {
+#Preview("Главная - светлая") {
     RootTabView()
         .preferredColorScheme(.light)
+        .environmentObject(AppContainer())
 }
 
-#Preview("Главная — тёмная") {
+#Preview("Главная - тёмная") {
     RootTabView()
         .preferredColorScheme(.dark)
+        .environmentObject(AppContainer())
 }

@@ -1,6 +1,7 @@
 struct YandexRaspRepositories {
     let stationCatalog: StationCatalogRepositoryProtocol
     let schedule: ScheduleRepositoryProtocol
+    let carrierDetails: CarrierDetailsRepositoryProtocol
 }
 
 enum YandexRaspRepositoryFactory {
@@ -14,6 +15,9 @@ enum YandexRaspRepositoryFactory {
             ),
             schedule: ScheduleRepository(
                 scheduleService: ScheduleBetweenStationsService(client: client, apiKey: apiKey)
+            ),
+            carrierDetails: CarrierDetailsRepository(
+                service: CarrierInfoService(client: client, apiKey: apiKey)
             )
         )
     }

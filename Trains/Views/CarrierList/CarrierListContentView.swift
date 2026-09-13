@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct CarrierListContentView: View {
+    @EnvironmentObject private var container: AppContainer
+
     let state: NetworkLoadState
     let trips: [CarrierTrip]
 
@@ -22,16 +24,22 @@ struct CarrierListContentView: View {
                     ScrollView {
                         LazyVStack(spacing: 8) {
                             ForEach(trips) { trip in
-                                NavigationLink {
-                                    PlaceholderView(
-                                        title: "Карточка перевозчика",
-                                        showsBackButton: true
-                                    )
-                                    .toolbar(.hidden, for: .tabBar)
-                                } label: {
+                                if let carrierCode = trip.carrierCode {
+                                    NavigationLink {
+                                        CarrierDetailsView(
+                                            trip: trip,
+                                            viewModel: container.makeCarrierDetailsViewModel(
+                                                carrierCode: carrierCode
+                                            )
+                                        )
+                                        .toolbar(.hidden, for: .tabBar)
+                                    } label: {
+                                        CarrierCardView(trip: trip)
+                                    }
+                                    .buttonStyle(.plain)
+                                } else {
                                     CarrierCardView(trip: trip)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, 16)
@@ -50,19 +58,23 @@ struct CarrierListContentView: View {
             trips: CarrierListPreviewData.trips
         )
         .background(Color("ScheduleBackground"))
+        .environmentObject(AppContainer())
     }
 }
 
 #Preview("Вариантов нет") {
     CarrierListContentView(state: .loaded, trips: [])
+        .environmentObject(AppContainer())
 }
 
 #Preview("Загрузка") {
     CarrierListContentView(state: .loading, trips: [])
+        .environmentObject(AppContainer())
 }
 
 #Preview("Ошибка сервера") {
     CarrierListContentView(state: .failed(.server), trips: [])
+        .environmentObject(AppContainer())
 }
 
 private enum CarrierListPreviewData {

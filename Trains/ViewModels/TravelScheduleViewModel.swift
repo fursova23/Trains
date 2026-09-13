@@ -13,17 +13,19 @@ final class TravelScheduleViewModel: ObservableObject {
     private let configurationError: Error?
     private var loadedRouteKey: String?
 
-    init() {
-        do {
-            let repositories = try YandexRaspRepositoryFactory.makeRepositories()
-            stationCatalogRepository = repositories.stationCatalog
-            scheduleRepository = repositories.schedule
-            configurationError = nil
-        } catch {
-            stationCatalogRepository = nil
-            scheduleRepository = nil
-            configurationError = error
-        }
+    init(
+        stationCatalogRepository: StationCatalogRepositoryProtocol,
+        scheduleRepository: ScheduleRepositoryProtocol
+    ) {
+        self.stationCatalogRepository = stationCatalogRepository
+        self.scheduleRepository = scheduleRepository
+        configurationError = nil
+    }
+
+    init(configurationError: Error) {
+        stationCatalogRepository = nil
+        scheduleRepository = nil
+        self.configurationError = configurationError
     }
 
     func loadCitiesIfNeeded() async {
