@@ -31,4 +31,5 @@ struct ContentView: View {
 
 #Preview("Приложение") {
     ContentView()
+        .environmentObject(AppContainer())
 }

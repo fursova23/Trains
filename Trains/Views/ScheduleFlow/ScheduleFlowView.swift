@@ -1,10 +1,14 @@
 import SwiftUI
 
 struct ScheduleFlowView: View {
-    @StateObject private var viewModel = TravelScheduleViewModel()
+    @EnvironmentObject private var container: AppContainer
     @State private var origin: RoutePoint?
     @State private var destination: RoutePoint?
     @State private var selectionTarget: RouteSelectionTarget?
+
+    private var viewModel: TravelScheduleViewModel {
+        container.travelScheduleViewModel
+    }
 
     var body: some View {
         NavigationStack {

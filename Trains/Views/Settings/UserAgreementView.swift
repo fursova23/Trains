@@ -1,11 +1,25 @@
 import SwiftUI
-import WebKit
 
 struct UserAgreementView: View {
+    fileprivate enum LoadingState {
+        case loading
+        case success
+        case failed(AppErrorKind)
+    }
+
     @Environment(\.dismiss) private var dismiss
-    @State private var isLoading = true
-    @State private var loadError: AppErrorKind?
+    @State private var state: LoadingState = .loading
     @State private var reloadID = UUID()
+    private let agreementURL: URL?
+
+    init() {
+        agreementURL = AppSettings.agreementURL
+    }
+
+    fileprivate init(state: LoadingState, agreementURL: URL?) {
+        _state = State(initialValue: state)
+        self.agreementURL = agreementURL
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,78 +37,68 @@ struct UserAgreementView: View {
             .frame(height: 42)
 
             ZStack {
-                AgreementWebView(url: AppSettings.agreementURL, isLoading: $isLoading, loadError: $loadError)
+                if let agreementURL {
+                    AgreementWebView(
+                        url: agreementURL,
+                        onLoadFinished: { state = .success },
+                        onLoadFailed: { state = .failed($0) }
+                    )
                     .id(reloadID)
-                    .opacity(loadError == nil ? 1 : 0)
+                    .opacity(isWebViewVisible ? 1 : 0)
+                }
 
-                if let loadError {
-                    VStack(spacing: 16) {
-                        ErrorStateView(kind: loadError)
-                        Button("Повторить") {
-                            self.loadError = nil
-                            isLoading = true
-                            reloadID = UUID()
-                        }
-                        .padding(.bottom, 24)
-                    }
-                } else if isLoading {
+                switch state {
+                case .loading:
                     ProgressView()
+
+                case .success:
+                    EmptyView()
+
+                case .failed(let error):
+                    VStack(spacing: 16) {
+                        ErrorStateView(kind: error)
+                        Button("Повторить", action: retryLoading)
+                            .padding(.bottom, 24)
+                    }
                 }
             }
         }
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
         .accessibilityIdentifier("agreementScreen")
     }
+
+    private var isWebViewVisible: Bool {
+        if case .failed = state {
+            return false
+        }
+
+        return true
+    }
+
+    private func retryLoading() {
+        state = .loading
+        reloadID = UUID()
+    }
+
 }
 
-private struct AgreementWebView: UIViewRepresentable {
-    let url: URL
-    @Binding var isLoading: Bool
-    @Binding var loadError: AppErrorKind?
+#Preview("User Agreement — Loading") {
+    UserAgreementView(
+        state: .loading,
+        agreementURL: nil
+    )
+}
 
-    func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
+#Preview("User Agreement — Success") {
+    UserAgreementView(
+        state: .success,
+        agreementURL: AppSettings.agreementURL
+    )
+}
 
-    func makeUIView(context: Context) -> WKWebView {
-        let view = WKWebView()
-        view.navigationDelegate = context.coordinator
-        view.isOpaque = false
-        view.backgroundColor = .clear
-        view.load(URLRequest(url: url))
-        return view
-    }
-
-    func updateUIView(_ uiView: WKWebView, context: Context) {
-        context.coordinator.parent = self
-    }
-
-    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
-        uiView.navigationDelegate = nil
-        uiView.stopLoading()
-    }
-
-    final class Coordinator: NSObject, WKNavigationDelegate {
-        var parent: AgreementWebView
-
-        init(parent: AgreementWebView) {
-            self.parent = parent
-        }
-
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            parent.isLoading = false
-        }
-
-        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            handle(error)
-        }
-
-        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-            handle(error)
-        }
-
-        private func handle(_ error: Error) {
-            guard (error as NSError).code != NSURLErrorCancelled else { return }
-            parent.isLoading = false
-            parent.loadError = AppErrorKind.from(error)
-        }
-    }
+#Preview("User Agreement — Failed") {
+    UserAgreementView(
+        state: .failed(.server),
+        agreementURL: nil
+    )
 }

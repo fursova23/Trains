@@ -1,6 +1,6 @@
 import Foundation
 
-struct StoriesPlayback {
+struct StoriesPlaybackViewModel {
     let storiesCount: Int
     let secondsPerStory: TimeInterval
     private(set) var currentIndex: Int

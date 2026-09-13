@@ -30,9 +30,11 @@ struct RootTabView: View {
 #Preview("Главная - светлая") {
     RootTabView()
         .preferredColorScheme(.light)
+        .environmentObject(AppContainer())
 }
 
 #Preview("Главная - тёмная") {
     RootTabView()
         .preferredColorScheme(.dark)
+        .environmentObject(AppContainer())
 }

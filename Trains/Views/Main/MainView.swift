@@ -115,7 +115,9 @@ struct MainView: View {
 #Preview("Главная с маршрутом") {
     NavigationStack {
         MainView(
-            viewModel: TravelScheduleViewModel(),
+            viewModel: TravelScheduleViewModel(
+                configurationError: NetworkConfigurationError.missingAPIKey
+            ),
             origin: .constant(RoutePoint(
                 city: "Москва",
                 station: "Курский вокзал",

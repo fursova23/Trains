@@ -3,30 +3,30 @@ import Foundation
 
 @MainActor
 final class CarrierDetailsViewModel: ObservableObject {
-    @Published private(set) var details: CarrierDetails
-    @Published private(set) var state: NetworkLoadState = .idle
-    private let carrierCode: Int?
-    private let repository: CarrierDetailsRepositoryProtocol?
+    private let carrierCode: Int
+    private let repository: CarrierDetailsRepositoryProtocol
 
-    init(trip: CarrierTrip, repository: CarrierDetailsRepositoryProtocol? = nil) {
-        details = CarrierDetails(name: trip.carrierName, logoURL: trip.logoURL, email: nil, phone: nil)
-        carrierCode = trip.carrierCode
+    @Published private(set) var state: NetworkLoadState = .idle
+    @Published private(set) var details: CarrierDetails?
+
+    init(
+        carrierCode: Int,
+        repository: CarrierDetailsRepositoryProtocol
+    ) {
+        self.carrierCode = carrierCode
         self.repository = repository
     }
 
     func load() async {
-        guard state != .loaded, state != .loading else { return }
-        guard let carrierCode else {
-            state = .loaded
-            return
-        }
+        guard state != .loading, state != .loaded else { return }
+
         state = .loading
+
         do {
-            let repository = try (self.repository ?? CarrierDetailsRepository(service: CarrierInfoService(
-                client: try YandexRaspClientFactory.makeClient(),
-                apiKey: try YandexRaspClientFactory.apiKey()
-            )))
-            details = try await repository.fetchCarrier(code: carrierCode)
+            let details = try await repository.fetchCarrier(code: carrierCode)
+            try Task.checkCancellation()
+
+            self.details = details
             state = .loaded
         } catch is CancellationError {
             state = .idle

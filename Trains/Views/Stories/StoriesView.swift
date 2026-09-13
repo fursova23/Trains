@@ -6,7 +6,7 @@ struct StoriesView: View {
     @Environment(\.scenePhase) private var scenePhase
     let story: Story
     let onViewStory: (Story) -> Void
-    @State private var playback: StoriesPlayback
+    @State private var playback: StoriesPlaybackViewModel
     @State private var lastTick = Date()
     @GestureState private var isDragging = false
     private let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
@@ -14,7 +14,7 @@ struct StoriesView: View {
     init(story: Story, onViewStory: @escaping (Story) -> Void) {
         self.story = story
         self.onViewStory = onViewStory
-        _playback = State(initialValue: StoriesPlayback(storiesCount: story.slides.count))
+        _playback = State(initialValue: StoriesPlaybackViewModel(storiesCount: story.slides.count))
     }
 
     var body: some View {
@@ -42,7 +42,7 @@ struct StoriesView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 40))
                 .overlay(alignment: .top) {
                     VStack(alignment: .trailing, spacing: 12) {
-                        StoriesProgressBar(playback: playback)
+                        StoriesProgressBarView(playback: playback)
                             .allowsHitTesting(false)
                         Button { dismiss() } label: {
                             Image(systemName: "xmark")
