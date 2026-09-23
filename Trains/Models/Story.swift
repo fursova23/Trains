@@ -1,6 +1,6 @@
 import Foundation
 
-struct Story: Identifiable {
+struct Story: Identifiable, Sendable {
     let id: Int
     let previewImageName: String
     let title: String

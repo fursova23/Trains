@@ -2,19 +2,20 @@ import Combine
 import Foundation
 
 @MainActor
-final class CarrierDetailsViewModel: ObservableObject {
-    private let carrierCode: Int
-    private let repository: CarrierDetailsRepositoryProtocol
-
+final class CitySelectionViewModel: ObservableObject {
+    @Published var query = ""
+    @Published private(set) var cities: [City] = []
     @Published private(set) var state: NetworkLoadState = .idle
     @Published private(set) var loadID = UUID()
-    @Published private(set) var details: CarrierDetails?
 
-    init(
-        carrierCode: Int,
-        repository: CarrierDetailsRepositoryProtocol
-    ) {
-        self.carrierCode = carrierCode
+    private let repository: StationCatalogRepositoryProtocol
+
+    var filteredCities: [City] {
+        let search = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return search.isEmpty ? cities : cities.filter { $0.name.localizedCaseInsensitiveContains(search) }
+    }
+
+    init(repository: StationCatalogRepositoryProtocol) {
         self.repository = repository
     }
 
@@ -22,14 +23,11 @@ final class CarrierDetailsViewModel: ObservableObject {
 
     func load() async {
         guard state != .loading, state != .loaded else { return }
-
         state = .loading
-
         do {
-            let details = try await repository.fetchCarrier(code: carrierCode)
+            let cities = try await repository.fetchCities()
             try Task.checkCancellation()
-
-            self.details = details
+            self.cities = cities
             state = .loaded
         } catch {
             state = Task.isCancelled || error is CancellationError ? .idle : .failed(AppErrorKind.from(error))

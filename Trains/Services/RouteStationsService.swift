@@ -3,11 +3,19 @@ import OpenAPIRuntime
 typealias RouteStations = Components.Schemas.ThreadStationsResponse
 
 /// Сервис для работы с API "Список станций следования"
-protocol RouteStationsServiceProtocol {
+protocol RouteStationsServiceProtocol: Sendable {
     func getRouteStations(uid: String, date: String) async throws -> RouteStations
 }
 
-final class RouteStationsService: BaseAPIService, RouteStationsServiceProtocol {
+actor RouteStationsService: RouteStationsServiceProtocol {
+    private let client: Client
+    private let apiKey: String
+
+    init(client: Client, apiKey: String) {
+        self.client = client
+        self.apiKey = apiKey
+    }
+
     func getRouteStations(uid: String, date: String) async throws -> RouteStations {
         let response = try await client.getRouteStations(query: .init(
             apikey: apiKey,

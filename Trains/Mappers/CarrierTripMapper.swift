@@ -1,6 +1,6 @@
 import Foundation
 
-protocol CarrierTripMapping {
+protocol CarrierTripMapping: Sendable {
     func map(_ response: ScheduleBetweenStations) -> [CarrierTrip]
 }
 
@@ -33,7 +33,7 @@ struct CarrierTripMapper: CarrierTripMapping {
             departure: departure,
             arrival: arrival,
             duration: duration,
-            hasTransfer: segment.thread == nil
+            hasTransfer: segment.has_transfers ?? false
         )
     }
 

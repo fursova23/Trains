@@ -1,40 +1,38 @@
 import SwiftUI
 
 struct StoriesCollectionView: View {
-    let stories: [Story]
-    @AppStorage(AppSettings.viewedStoriesKey) private var viewedStoryIDs = ""
-    @State private var selectedStory: Story?
+    @StateObject private var viewModel: StoriesCollectionViewModel
 
-    private var viewedIDs: Set<Int> {
-        Set(viewedStoryIDs.split(separator: ",").compactMap { Int($0) })
+    init(stories: [Story]) {
+        _viewModel = StateObject(wrappedValue: StoriesCollectionViewModel(stories: stories))
     }
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(stories) { story in
+                ForEach(viewModel.stories) { story in
                     Button {
-                        selectedStory = story
+                        viewModel.select(story)
                     } label: {
                         preview(for: story)
                     }
                     .buttonStyle(.plain)
                     .disabled(story.slides.isEmpty)
                     .accessibilityLabel("История \(story.id)")
-                    .accessibilityValue(viewedIDs.contains(story.id) ? "Просмотрена" : "Не просмотрена")
+                    .accessibilityValue(viewModel.viewedIDs.contains(story.id) ? "Просмотрена" : "Не просмотрена")
                     .accessibilityIdentifier("storyPreview_\(story.id)")
                 }
             }
             .padding(.horizontal, 16)
         }
         .frame(height: 140)
-        .fullScreenCover(item: $selectedStory) { story in
-            StoriesView(story: story, onViewStory: markViewed)
+        .fullScreenCover(item: $viewModel.selectedStory) { story in
+            StoriesView(story: story, onViewStory: viewModel.markViewed)
         }
     }
 
     private func preview(for story: Story) -> some View {
-        let isViewed = viewedIDs.contains(story.id)
+        let isViewed = viewModel.viewedIDs.contains(story.id)
         return StoryImageView(name: story.previewImageName, storyID: story.id)
             .opacity(isViewed ? 0.5 : 1)
             .overlay(alignment: .bottomLeading) {
@@ -53,9 +51,4 @@ struct StoriesCollectionView: View {
             }
     }
 
-    private func markViewed(_ story: Story) {
-        var ids = viewedIDs
-        ids.insert(story.id)
-        viewedStoryIDs = ids.sorted().map(String.init).joined(separator: ",")
-    }
 }

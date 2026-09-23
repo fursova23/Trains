@@ -3,11 +3,11 @@ import SwiftUI
 struct FiltersView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding private var filter: CarrierFilter
-    @State private var draft: CarrierFilter
+    @StateObject private var viewModel: FiltersViewModel
 
     init(filter: Binding<CarrierFilter>) {
         _filter = filter
-        _draft = State(initialValue: filter.wrappedValue)
+        _viewModel = StateObject(wrappedValue: FiltersViewModel(filter: filter.wrappedValue))
     }
 
     var body: some View {
@@ -26,7 +26,7 @@ struct FiltersView: View {
 
                     ForEach(DeparturePeriod.allCases) { period in
                         Button {
-                            toggle(period)
+                            viewModel.toggle(period)
                         } label: {
                             HStack {
                                 Text(period.title)
@@ -36,7 +36,7 @@ struct FiltersView: View {
                                 Spacer()
 
                                 CheckboxView(
-                                    isSelected: draft.periods.contains(period)
+                                    isSelected: viewModel.draft.periods.contains(period)
                                 )
                             }
                             .frame(height: 60)
@@ -52,7 +52,7 @@ struct FiltersView: View {
 
                     ForEach(TransferOption.allCases) { option in
                         Button {
-                            draft.transferOption = option
+                            viewModel.select(option)
                         } label: {
                             HStack {
                                 Text(option.title)
@@ -62,7 +62,7 @@ struct FiltersView: View {
                                 Spacer()
 
                                 RadioButtonView(
-                                    isSelected: draft.transferOption == option
+                                    isSelected: viewModel.draft.transferOption == option
                                 )
                             }
                             .frame(height: 60)
@@ -78,9 +78,9 @@ struct FiltersView: View {
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            if draft.hasSelection {
+            if viewModel.canApply {
                 Button {
-                    filter = draft
+                    filter = viewModel.draft
                     dismiss()
                 } label: {
                     Text("Применить")
@@ -100,13 +100,7 @@ struct FiltersView: View {
         }
     }
 
-    private func toggle(_ period: DeparturePeriod) {
-        if draft.periods.contains(period) {
-            draft.periods.remove(period)
-        } else {
-            draft.periods.insert(period)
-        }
-    }
+
 }
 
 #Preview("Фильтры") {

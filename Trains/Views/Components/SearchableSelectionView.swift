@@ -5,15 +5,7 @@ struct SearchableSelectionView<Item: Identifiable>: View where Item.ID: Hashable
     let onBack: () -> Void
     let onSelect: (Item) -> Void
 
-    @State private var query = ""
-
-    private var filteredItems: [Item] {
-        guard !query.isEmpty else { return configuration.items }
-
-        return configuration.items.filter {
-            title(for: $0).localizedCaseInsensitiveContains(query)
-        }
-    }
+    @Binding var query: String
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,7 +14,7 @@ struct SearchableSelectionView<Item: Identifiable>: View where Item.ID: Hashable
             SearchField(text: $query)
                 .padding(.horizontal, 16)
 
-            if filteredItems.isEmpty {
+            if configuration.items.isEmpty {
                 Spacer()
 
                 Text(configuration.emptyMessage)
@@ -33,7 +25,7 @@ struct SearchableSelectionView<Item: Identifiable>: View where Item.ID: Hashable
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        ForEach(filteredItems) { item in
+                        ForEach(configuration.items) { item in
                             Button {
                                 onSelect(item)
                             } label: {

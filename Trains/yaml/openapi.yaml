@@ -506,6 +506,9 @@ components:
     Segment:
       type: object
       properties:
+        has_transfers:
+          type: boolean
+          description: Признак наличия пересадок по маршруту.
         from:
           $ref: '#/components/schemas/Station'
         to:

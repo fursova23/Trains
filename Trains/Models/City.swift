@@ -1,4 +1,4 @@
-struct City: Identifiable, Hashable {
+struct City: Identifiable, Hashable, Sendable {
     let code: String
     let name: String
     let stations: [TravelStation]

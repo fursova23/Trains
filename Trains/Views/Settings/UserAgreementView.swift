@@ -1,24 +1,11 @@
 import SwiftUI
 
 struct UserAgreementView: View {
-    fileprivate enum LoadingState {
-        case loading
-        case success
-        case failed(AppErrorKind)
-    }
-
     @Environment(\.dismiss) private var dismiss
-    @State private var state: LoadingState = .loading
-    @State private var reloadID = UUID()
-    private let agreementURL: URL?
+    @StateObject private var viewModel: UserAgreementViewModel
 
-    init() {
-        agreementURL = AppSettings.agreementURL
-    }
-
-    fileprivate init(state: LoadingState, agreementURL: URL?) {
-        _state = State(initialValue: state)
-        self.agreementURL = agreementURL
+    init(viewModel: @autoclosure @escaping () -> UserAgreementViewModel = UserAgreementViewModel()) {
+        _viewModel = StateObject(wrappedValue: viewModel())
     }
 
     var body: some View {
@@ -37,68 +24,44 @@ struct UserAgreementView: View {
             .frame(height: 42)
 
             ZStack {
-                if let agreementURL {
-                    AgreementWebView(
-                        url: agreementURL,
-                        onLoadFinished: { state = .success },
-                        onLoadFailed: { state = .failed($0) }
-                    )
-                    .id(reloadID)
-                    .opacity(isWebViewVisible ? 1 : 0)
+                if let request = viewModel.request {
+                    AgreementWebView(request: request)
+                    .id(request.id)
+                    .opacity(viewModel.state == .loaded ? 1 : 0)
                 }
 
-                switch state {
-                case .loading:
+                switch viewModel.state {
+                case .idle, .loading:
                     ProgressView()
 
-                case .success:
+                case .loaded:
                     EmptyView()
 
                 case .failed(let error):
                     VStack(spacing: 16) {
                         ErrorStateView(kind: error)
-                        Button("Повторить", action: retryLoading)
+                        Button("Повторить", action: viewModel.retry)
                             .padding(.bottom, 24)
                     }
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .task(id: viewModel.loadID) { await viewModel.load() }
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
         .accessibilityIdentifier("agreementScreen")
-    }
-
-    private var isWebViewVisible: Bool {
-        if case .failed = state {
-            return false
-        }
-
-        return true
-    }
-
-    private func retryLoading() {
-        state = .loading
-        reloadID = UUID()
     }
 
 }
 
 #Preview("User Agreement — Loading") {
-    UserAgreementView(
-        state: .loading,
-        agreementURL: nil
-    )
+    UserAgreementView(viewModel: UserAgreementViewModel(url: nil, state: .loading))
 }
 
 #Preview("User Agreement — Success") {
-    UserAgreementView(
-        state: .success,
-        agreementURL: AppSettings.agreementURL
-    )
+    UserAgreementView(viewModel: UserAgreementViewModel(state: .loaded))
 }
 
 #Preview("User Agreement — Failed") {
-    UserAgreementView(
-        state: .failed(.server),
-        agreementURL: nil
-    )
+    UserAgreementView(viewModel: UserAgreementViewModel(url: nil, state: .failed(.server)))
 }

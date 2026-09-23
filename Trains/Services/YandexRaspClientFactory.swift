@@ -13,11 +13,12 @@ enum NetworkConfigurationError: LocalizedError {
 }
 
 enum YandexRaspClientFactory {
-    static func makeClient() throws -> Client {
-        Client(
+    static func makeClient() throws -> YandexRaspClient {
+        let generatedClient = Client(
             serverURL: try Servers.Server1.url(),
             transport: URLSessionTransport()
         )
+        return YandexRaspClient(client: generatedClient, apiKey: try apiKey())
     }
 
     static func apiKey() throws -> String {

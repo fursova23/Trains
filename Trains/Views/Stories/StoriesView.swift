@@ -1,4 +1,3 @@
-import Combine
 import SwiftUI
 
 struct StoriesView: View {
@@ -6,15 +5,13 @@ struct StoriesView: View {
     @Environment(\.scenePhase) private var scenePhase
     let story: Story
     let onViewStory: (Story) -> Void
-    @State private var playback: StoriesPlaybackViewModel
-    @State private var lastTick = Date()
+    @StateObject private var playback: StoriesPlaybackViewModel
     @GestureState private var isDragging = false
-    private let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
 
     init(story: Story, onViewStory: @escaping (Story) -> Void) {
         self.story = story
         self.onViewStory = onViewStory
-        _playback = State(initialValue: StoriesPlaybackViewModel(storiesCount: story.slides.count))
+        _playback = StateObject(wrappedValue: StoriesPlaybackViewModel(storiesCount: story.slides.count))
     }
 
     var body: some View {
@@ -64,34 +61,24 @@ struct StoriesView: View {
             }
         }
         .preferredColorScheme(.dark)
-        .onAppear {
-            lastTick = Date()
-            if playback.isFinished {
+        .task {
+            guard !playback.isFinished else {
                 dismiss()
-            } else {
-                onViewStory(story)
+                return
             }
-        }
-        .onChange(of: playback.currentIndex) { _, _ in
-            lastTick = Date()
+            onViewStory(story)
+            playback.setPaused(scenePhase != .active || isDragging)
+            await playback.run()
+            if playback.isFinished, !Task.isCancelled { dismiss() }
         }
         .onChange(of: playback.isFinished) { _, isFinished in
-            if isFinished {
-                dismiss()
-            }
+            if isFinished { dismiss() }
         }
         .onChange(of: scenePhase) { _, _ in
-            lastTick = Date()
+            playback.setPaused(scenePhase != .active || isDragging)
         }
         .onChange(of: isDragging) { _, _ in
-            lastTick = Date()
-        }
-        .onReceive(timer) { now in
-            defer {
-                lastTick = now
-            }
-            guard scenePhase == .active, !isDragging else { return }
-            playback.advance(by: now.timeIntervalSince(lastTick))
+            playback.setPaused(scenePhase != .active || isDragging)
         }
     }
 
@@ -113,12 +100,10 @@ struct StoriesView: View {
     }
 
     private func nextSlide() {
-        lastTick = Date()
         playback.next()
     }
 
     private func previousSlide() {
-        lastTick = Date()
         playback.previous()
     }
 }

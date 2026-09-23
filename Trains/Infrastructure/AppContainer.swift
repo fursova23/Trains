@@ -3,36 +3,40 @@ import Foundation
 
 @MainActor
 final class AppContainer: ObservableObject {
-    let travelScheduleViewModel: TravelScheduleViewModel
+    let settingsViewModel: SettingsViewModel
+    let mainViewModel: MainViewModel
+    let rootViewModel = AppRootViewModel()
 
+    private let stationCatalogRepository: StationCatalogRepositoryProtocol
+    private let scheduleRepository: ScheduleRepositoryProtocol
     private let carrierDetailsRepository: CarrierDetailsRepositoryProtocol
 
-    init() {
+    init(userDefaults: UserDefaults = .standard) {
+        settingsViewModel = SettingsViewModel(userDefaults: userDefaults)
+        mainViewModel = MainViewModel()
+
         do {
             let repositories = try YandexRaspRepositoryFactory.makeRepositories()
-            travelScheduleViewModel = TravelScheduleViewModel(
-                stationCatalogRepository: repositories.stationCatalog,
-                scheduleRepository: repositories.schedule
-            )
+            stationCatalogRepository = repositories.stationCatalog
+            scheduleRepository = repositories.schedule
             carrierDetailsRepository = repositories.carrierDetails
         } catch {
-            travelScheduleViewModel = TravelScheduleViewModel(configurationError: error)
-            carrierDetailsRepository = UnavailableCarrierDetailsRepository(error: error)
+            let unavailable = UnavailableRepositories(error: error)
+            stationCatalogRepository = unavailable
+            scheduleRepository = unavailable
+            carrierDetailsRepository = unavailable
         }
     }
 
-    func makeCarrierDetailsViewModel(carrierCode: Int) -> CarrierDetailsViewModel {
-        CarrierDetailsViewModel(
-            carrierCode: carrierCode,
-            repository: carrierDetailsRepository
-        )
+    func makeCitySelectionViewModel() -> CitySelectionViewModel {
+        CitySelectionViewModel(repository: stationCatalogRepository)
     }
-}
 
-private struct UnavailableCarrierDetailsRepository: CarrierDetailsRepositoryProtocol {
-    let error: Error
+    func makeCarrierListViewModel(origin: RoutePoint, destination: RoutePoint) -> CarrierListViewModel {
+        CarrierListViewModel(origin: origin, destination: destination, repository: scheduleRepository)
+    }
 
-    func fetchCarrier(code: Int) async throws -> CarrierDetails {
-        throw error
+    func makeCarrierDetailsViewModel(carrierCode: Int) -> CarrierDetailsViewModel {
+        CarrierDetailsViewModel(carrierCode: carrierCode, repository: carrierDetailsRepository)
     }
 }

@@ -1,4 +1,4 @@
-enum RouteSelectionTarget: String, Identifiable {
+enum RouteSelectionTarget: String, Identifiable, Sendable {
     case origin
     case destination
 

@@ -1,4 +1,4 @@
-struct RoutePoint: Equatable, Hashable {
+struct RoutePoint: Equatable, Hashable, Sendable {
     let city: String
     let station: String
     let stationCode: String

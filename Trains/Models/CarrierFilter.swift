@@ -1,4 +1,4 @@
-struct CarrierFilter: Equatable {
+struct CarrierFilter: Equatable, Sendable {
     var periods: Set<DeparturePeriod> = []
     var transferOption: TransferOption?
 

@@ -1,4 +1,4 @@
-enum AppTab: Hashable {
+enum AppTab: Hashable, Sendable {
     case schedule
     case settings
 }

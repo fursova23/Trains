@@ -1,11 +1,14 @@
 import SwiftUI
 
 struct RootTabView: View {
-    @State private var selectedTab: AppTab = .schedule
+    @EnvironmentObject private var container: AppContainer
+    @ObservedObject private var viewModel: AppRootViewModel
+
+    init(viewModel: AppRootViewModel) { self.viewModel = viewModel }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            ScheduleFlowView()
+        TabView(selection: $viewModel.selectedTab) {
+            ScheduleFlowView(viewModel: container.mainViewModel)
                 .tabItem {
                     Image(systemName: "arrow.up.message.fill")
                         .accessibilityLabel("Расписание")
@@ -14,7 +17,7 @@ struct RootTabView: View {
                 .tag(AppTab.schedule)
 
             NavigationStack {
-                SettingsView()
+                SettingsView(viewModel: container.settingsViewModel)
             }
             .toolbar(.hidden, for: .navigationBar)
             .tabItem {
@@ -28,13 +31,13 @@ struct RootTabView: View {
 }
 
 #Preview("Главная - светлая") {
-    RootTabView()
+    RootTabView(viewModel: AppRootViewModel())
         .preferredColorScheme(.light)
         .environmentObject(AppContainer())
 }
 
 #Preview("Главная - тёмная") {
-    RootTabView()
+    RootTabView(viewModel: AppRootViewModel())
         .preferredColorScheme(.dark)
         .environmentObject(AppContainer())
 }

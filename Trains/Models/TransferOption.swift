@@ -1,4 +1,4 @@
-enum TransferOption: String, CaseIterable, Identifiable {
+enum TransferOption: String, CaseIterable, Identifiable, Sendable {
     case withTransfers
     case withoutTransfers
 

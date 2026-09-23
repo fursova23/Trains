@@ -1,4 +1,4 @@
-enum NetworkLoadState: Equatable {
+enum NetworkLoadState: Equatable, Sendable {
     case idle
     case loading
     case loaded

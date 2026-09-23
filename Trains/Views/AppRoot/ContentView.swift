@@ -1,35 +1,34 @@
 import SwiftUI
 
 struct ContentView: View {
-    @AppStorage(AppSettings.darkThemeKey) private var isDarkThemeEnabled = false
-    @State private var isSplashVisible = true
+    @ObservedObject private var viewModel: AppRootViewModel
+    @ObservedObject private var settings: SettingsViewModel
+
+    init(viewModel: AppRootViewModel, settings: SettingsViewModel) {
+        self.viewModel = viewModel
+        self.settings = settings
+    }
 
     var body: some View {
         ZStack {
-            RootTabView()
-                .allowsHitTesting(!isSplashVisible)
-                .accessibilityHidden(isSplashVisible)
+            RootTabView(viewModel: viewModel)
+                .allowsHitTesting(!viewModel.isSplashVisible)
+                .accessibilityHidden(viewModel.isSplashVisible)
 
-            if isSplashVisible {
+            if viewModel.isSplashVisible {
                 SplashView()
                     .transition(.opacity)
                     .zIndex(1)
             }
         }
-        .preferredColorScheme(isDarkThemeEnabled ? .dark : .light)
-        .task {
-            guard isSplashVisible else { return }
-
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-
-            withAnimation(.easeOut(duration: 0.25)) {
-                isSplashVisible = false
-            }
-        }
+        .preferredColorScheme(settings.isDarkThemeEnabled ? .dark : .light)
+        .animation(.easeOut(duration: 0.25), value: viewModel.isSplashVisible)
+        .task { await viewModel.finishLaunch() }
     }
 }
 
 #Preview("Приложение") {
-    ContentView()
-        .environmentObject(AppContainer())
+    let container = AppContainer()
+    ContentView(viewModel: container.rootViewModel, settings: container.settingsViewModel)
+        .environmentObject(container)
 }

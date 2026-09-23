@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct StoriesProgressBarView: View {
-    let playback: StoriesPlaybackViewModel
+    @ObservedObject var playback: StoriesPlaybackViewModel
 
     var body: some View {
         HStack(spacing: 6) {

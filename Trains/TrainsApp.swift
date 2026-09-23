@@ -6,7 +6,7 @@ struct TrainsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(viewModel: container.rootViewModel, settings: container.settingsViewModel)
                 .environmentObject(container)
         }
     }
