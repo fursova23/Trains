@@ -5,7 +5,7 @@ struct CarrierDetails: Sendable {
     let logoURL: URL?
     let email: String?
     let phone: String?
-    var websiteURL: URL? = nil
+    var websiteURL: URL?
 
     var emailURL: URL? {
         guard let email else { return nil }

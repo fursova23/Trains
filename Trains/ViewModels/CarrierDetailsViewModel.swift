@@ -2,12 +2,10 @@ import Combine
 import Foundation
 
 @MainActor
-final class CarrierDetailsViewModel: ObservableObject {
+final class CarrierDetailsViewModel: NetworkLoadingViewModel {
     private let carrierCode: Int
     private let repository: CarrierDetailsRepositoryProtocol
 
-    @Published private(set) var state: NetworkLoadState = .idle
-    @Published private(set) var loadID = UUID()
     @Published private(set) var details: CarrierDetails?
 
     init(
@@ -16,23 +14,13 @@ final class CarrierDetailsViewModel: ObservableObject {
     ) {
         self.carrierCode = carrierCode
         self.repository = repository
+        super.init()
     }
 
-    func retry() { loadID = UUID() }
-
     func load() async {
-        guard state != .loading, state != .loaded else { return }
-
-        state = .loading
-
-        do {
-            let details = try await repository.fetchCarrier(code: carrierCode)
-            try Task.checkCancellation()
-
-            self.details = details
-            state = .loaded
-        } catch {
-            state = Task.isCancelled || error is CancellationError ? .idle : .failed(AppErrorKind.from(error))
-        }
+        await load(
+            operation: { try await repository.fetchCarrier(code: carrierCode) },
+            onSuccess: { details = $0 }
+        )
     }
 }

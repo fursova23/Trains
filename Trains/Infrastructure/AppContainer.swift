@@ -11,9 +11,22 @@ final class AppContainer: ObservableObject {
     private let scheduleRepository: ScheduleRepositoryProtocol
     private let carrierDetailsRepository: CarrierDetailsRepositoryProtocol
 
-    init(userDefaults: UserDefaults = .standard) {
+    init(
+        userDefaults: UserDefaults = .standard,
+        arguments: [String] = ProcessInfo.processInfo.arguments
+    ) {
         settingsViewModel = SettingsViewModel(userDefaults: userDefaults)
         mainViewModel = MainViewModel()
+
+#if DEBUG
+        if arguments.contains("-ui-testing") {
+            let repositories = UITestRepositories(arguments: arguments)
+            stationCatalogRepository = repositories
+            scheduleRepository = repositories
+            carrierDetailsRepository = repositories
+            return
+        }
+#endif
 
         do {
             let repositories = try YandexRaspRepositoryFactory.makeRepositories()

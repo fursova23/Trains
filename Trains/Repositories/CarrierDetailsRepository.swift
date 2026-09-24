@@ -5,6 +5,11 @@ protocol CarrierDetailsRepositoryProtocol: Sendable {
 }
 
 actor CarrierDetailsRepository: CarrierDetailsRepositoryProtocol {
+    private enum URLScheme {
+        static let http = "http"
+        static let https = "https"
+    }
+
     private let service: CarrierInfoServiceProtocol
 
     init(service: CarrierInfoServiceProtocol) {
@@ -27,14 +32,15 @@ actor CarrierDetailsRepository: CarrierDetailsRepositoryProtocol {
 
     private func makeWebsiteURL(from value: String?) -> URL? {
         guard let value = value?.trimmedNonEmpty else { return nil }
-        let address = value.hasPrefix("//") ? "https:\(value)" : value
+        let address = value.hasPrefix("//") ? "\(URLScheme.https):\(value)" : value
         guard let url = URL(string: address),
-              ["http", "https"].contains(url.scheme?.lowercased() ?? "") else { return nil }
+              let scheme = url.scheme?.lowercased(),
+              [URLScheme.http, URLScheme.https].contains(scheme) else { return nil }
         return url
     }
 
     private func makeLogoURL(from value: String?) -> URL? {
         guard let value = value?.trimmedNonEmpty else { return nil }
-        return URL(string: value.hasPrefix("//") ? "https:\(value)" : value)
+        return URL(string: value.hasPrefix("//") ? "\(URLScheme.https):\(value)" : value)
     }
 }

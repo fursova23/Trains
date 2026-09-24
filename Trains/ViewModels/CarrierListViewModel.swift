@@ -2,10 +2,8 @@ import Combine
 import Foundation
 
 @MainActor
-final class CarrierListViewModel: ObservableObject {
+final class CarrierListViewModel: NetworkLoadingViewModel {
     @Published private(set) var trips: [CarrierTrip] = []
-    @Published private(set) var state: NetworkLoadState = .idle
-    @Published private(set) var loadID = UUID()
     @Published var filter = CarrierFilter()
 
     let origin: RoutePoint
@@ -27,22 +25,19 @@ final class CarrierListViewModel: ObservableObject {
         self.origin = origin
         self.destination = destination
         self.repository = repository
+        super.init()
     }
 
-    func retry() { loadID = UUID() }
-
     func load() async {
-        guard state != .loading, state != .loaded else { return }
-        state = .loading
-        do {
-            let trips = try await repository.fetchTrips(
-                from: origin.stationCode, to: destination.stationCode, date: .now
-            )
-            try Task.checkCancellation()
-            self.trips = trips
-            state = .loaded
-        } catch {
-            state = Task.isCancelled || error is CancellationError ? .idle : .failed(AppErrorKind.from(error))
-        }
+        await load(
+            operation: {
+                try await repository.fetchTrips(
+                    from: origin.stationCode,
+                    to: destination.stationCode,
+                    date: .now
+                )
+            },
+            onSuccess: { trips = $0 }
+        )
     }
 }

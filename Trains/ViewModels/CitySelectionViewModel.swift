@@ -2,11 +2,9 @@ import Combine
 import Foundation
 
 @MainActor
-final class CitySelectionViewModel: ObservableObject {
+final class CitySelectionViewModel: NetworkLoadingViewModel {
     @Published var query = ""
     @Published private(set) var cities: [City] = []
-    @Published private(set) var state: NetworkLoadState = .idle
-    @Published private(set) var loadID = UUID()
 
     private let repository: StationCatalogRepositoryProtocol
 
@@ -17,20 +15,13 @@ final class CitySelectionViewModel: ObservableObject {
 
     init(repository: StationCatalogRepositoryProtocol) {
         self.repository = repository
+        super.init()
     }
 
-    func retry() { loadID = UUID() }
-
     func load() async {
-        guard state != .loading, state != .loaded else { return }
-        state = .loading
-        do {
-            let cities = try await repository.fetchCities()
-            try Task.checkCancellation()
-            self.cities = cities
-            state = .loaded
-        } catch {
-            state = Task.isCancelled || error is CancellationError ? .idle : .failed(AppErrorKind.from(error))
-        }
+        await load(
+            operation: { try await repository.fetchCities() },
+            onSuccess: { cities = $0 }
+        )
     }
 }
