@@ -1,6 +1,6 @@
 import Foundation
 
-enum AppErrorKind: String, Equatable {
+enum AppErrorKind: String, Equatable, Sendable {
     case noInternet
     case server
 

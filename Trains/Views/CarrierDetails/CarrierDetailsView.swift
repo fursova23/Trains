@@ -28,7 +28,7 @@ struct CarrierDetailsView: View {
         )
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .task { await viewModel.load() }
+        .task(id: viewModel.loadID) { await viewModel.load() }
     }
 
     // MARK: - Subviews
@@ -83,9 +83,13 @@ struct CarrierDetailsView: View {
             Text(error.title)
                 .foregroundStyle(.secondary)
 
-            Button("Повторить", action: retryLoading)
+            Button("Повторить", action: viewModel.retry)
 
         case .loaded:
+            if let website = viewModel.details?.websiteURL {
+                contact(title: "Сайт", value: website.host ?? website.absoluteString, url: website)
+            }
+
             contact(
                 title: "E-mail",
                 value: viewModel.details?.email,
@@ -137,13 +141,7 @@ struct CarrierDetailsView: View {
         .frame(minHeight: 44, alignment: .leading)
     }
 
-    // MARK: - Actions
 
-    private func retryLoading() {
-        Task {
-            await viewModel.load()
-        }
-    }
 }
 
 // MARK: - Previews

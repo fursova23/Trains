@@ -2,9 +2,7 @@ import SwiftUI
 import WebKit
 
 struct AgreementWebView: UIViewRepresentable {
-    let url: URL
-    let onLoadFinished: () -> Void
-    let onLoadFailed: (AppErrorKind) -> Void
+    let request: WebPageRequest
 
     func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
 
@@ -13,7 +11,7 @@ struct AgreementWebView: UIViewRepresentable {
         view.navigationDelegate = context.coordinator
         view.isOpaque = false
         view.backgroundColor = .clear
-        view.load(URLRequest(url: url))
+        view.load(URLRequest(url: request.url))
         return view
     }
 
@@ -24,6 +22,7 @@ struct AgreementWebView: UIViewRepresentable {
     static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
         uiView.navigationDelegate = nil
         uiView.stopLoading()
+        coordinator.parent.request.complete(.failure(CancellationError()))
     }
 
     final class Coordinator: NSObject, WKNavigationDelegate {
@@ -34,7 +33,7 @@ struct AgreementWebView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            parent.onLoadFinished()
+            parent.request.complete(.success(()))
         }
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
@@ -46,16 +45,13 @@ struct AgreementWebView: UIViewRepresentable {
         }
 
         private func handle(_ error: Error) {
-            guard (error as NSError).code != NSURLErrorCancelled else { return }
-            parent.onLoadFailed(AppErrorKind.from(error))
+            guard (error as NSError).domain != NSURLErrorDomain
+                    || (error as NSError).code != NSURLErrorCancelled else { return }
+            parent.request.complete(.failure(error))
         }
     }
 }
 
 #Preview("Agreement Web View") {
-    AgreementWebView(
-        url: AppSettings.agreementURL,
-        onLoadFinished: {},
-        onLoadFailed: { _ in }
-    )
+    AgreementWebView(request: WebPageRequest(url: AppSettings.agreementURL))
 }

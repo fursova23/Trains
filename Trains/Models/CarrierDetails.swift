@@ -1,10 +1,11 @@
 import Foundation
 
-struct CarrierDetails {
+struct CarrierDetails: Sendable {
     let name: String
     let logoURL: URL?
     let email: String?
     let phone: String?
+    var websiteURL: URL?
 
     var emailURL: URL? {
         guard let email else { return nil }

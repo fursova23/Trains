@@ -1,8 +1,8 @@
-protocol StationCatalogRepositoryProtocol {
+protocol StationCatalogRepositoryProtocol: Sendable {
     func fetchCities() async throws -> [City]
 }
 
-final class StationCatalogRepository: StationCatalogRepositoryProtocol {
+actor StationCatalogRepository: StationCatalogRepositoryProtocol {
     private let allStationsService: AllStationsServiceProtocol
     private let allStationsMapper: AllStationsMapping
     private var cachedCities: [City]?
@@ -21,7 +21,10 @@ final class StationCatalogRepository: StationCatalogRepositoryProtocol {
         }
 
         let response = try await allStationsService.getAllStations()
+        try Task.checkCancellation()
+        if let cachedCities { return cachedCities }
         let cities = allStationsMapper.map(response)
+        try Task.checkCancellation()
         cachedCities = cities
         return cities
     }

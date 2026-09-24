@@ -3,11 +3,19 @@ import OpenAPIRuntime
 typealias CarrierInfo = Components.Schemas.CarrierResponse
 
 /// Сервис для работы с API "Информация о перевозчике"
-protocol CarrierInfoServiceProtocol {
+protocol CarrierInfoServiceProtocol: Sendable {
     func getCarrier(code: String, system: String?) async throws -> CarrierInfo
 }
 
-final class CarrierInfoService: BaseAPIService, CarrierInfoServiceProtocol {
+actor CarrierInfoService: CarrierInfoServiceProtocol {
+    private let client: Client
+    private let apiKey: String
+
+    init(client: Client, apiKey: String) {
+        self.client = client
+        self.apiKey = apiKey
+    }
+
     func getCarrier(code: String, system: String? = nil) async throws -> CarrierInfo {
         let response = try await client.getCarrierInfo(query: .init(
             apikey: apiKey,

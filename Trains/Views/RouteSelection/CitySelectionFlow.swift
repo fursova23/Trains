@@ -3,43 +3,34 @@ import SwiftUI
 struct CitySelectionFlow: View {
     @Environment(\.dismiss) private var dismiss
 
-    @ObservedObject var viewModel: TravelScheduleViewModel
+    @StateObject private var viewModel: CitySelectionViewModel
     let onComplete: (RoutePoint) -> Void
 
     @State private var path: [City] = []
+
+    init(viewModel: @autoclosure @escaping () -> CitySelectionViewModel,
+         onComplete: @escaping (RoutePoint) -> Void) {
+        _viewModel = StateObject(wrappedValue: viewModel())
+        self.onComplete = onComplete
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
             cityContent
                 .navigationDestination(for: City.self) { city in
-                    SearchableSelectionView(
-                        configuration: SearchableSelectionConfiguration(
-                            title: "Выбор станции",
-                            items: city.stations,
-                            itemTitle: \.name,
-                            emptyMessage: "Станция не найдена"
-                        ),
-                        onBack: { path.removeLast() },
-                        onSelect: { station in
-                            onComplete(RoutePoint(
-                                city: city.name,
-                                station: station.name,
-                                stationCode: station.code
-                            ))
-                        }
-                    )
+                    StationSelectionView(city: city, onBack: { path.removeLast() }, onSelect: onComplete)
                 }
         }
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .task {
-            await viewModel.loadCitiesIfNeeded()
+        .task(id: viewModel.loadID) {
+            await viewModel.load()
         }
     }
 
     @ViewBuilder
     private var cityContent: some View {
-        switch viewModel.catalogState {
+        switch viewModel.state {
         case .idle, .loading:
             SelectionLoadingView(title: "Выбор города") {
                 dismiss()
@@ -48,16 +39,19 @@ struct CitySelectionFlow: View {
             SearchableSelectionView(
                 configuration: SearchableSelectionConfiguration(
                     title: "Выбор города",
-                    items: viewModel.cities,
+                    items: viewModel.filteredCities,
                     itemTitle: \.name,
                     emptyMessage: "Город не найден"
                 ),
                 onBack: { dismiss() },
-                onSelect: { path.append($0) }
+                onSelect: { path.append($0) },
+                query: $viewModel.query
             )
         case .failed(let errorKind):
-            SelectionErrorView(title: "Выбор города", errorKind: errorKind) {
-                dismiss()
+            VStack(spacing: 16) {
+                SelectionErrorView(title: "Выбор города", errorKind: errorKind) { dismiss() }
+                Button("Повторить", action: viewModel.retry)
+                    .padding(.bottom, 24)
             }
         }
     }

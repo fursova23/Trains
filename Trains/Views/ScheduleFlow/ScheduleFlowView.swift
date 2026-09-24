@@ -2,39 +2,29 @@ import SwiftUI
 
 struct ScheduleFlowView: View {
     @EnvironmentObject private var container: AppContainer
-    @State private var origin: RoutePoint?
-    @State private var destination: RoutePoint?
-    @State private var selectionTarget: RouteSelectionTarget?
 
-    private var viewModel: TravelScheduleViewModel {
-        container.travelScheduleViewModel
-    }
+    @ObservedObject private var viewModel: MainViewModel
+
+    init(viewModel: MainViewModel) { self.viewModel = viewModel }
 
     var body: some View {
         NavigationStack {
             MainView(
-                viewModel: viewModel,
-                origin: $origin,
-                destination: $destination,
-                onSelectOrigin: { selectionTarget = .origin },
-                onSelectDestination: { selectionTarget = .destination }
+                viewModel: viewModel
             )
-        }
-        .toolbar(.hidden, for: .navigationBar)
-        .fullScreenCover(item: $selectionTarget) { target in
-            CitySelectionFlow(viewModel: viewModel) { point in
-                setRoutePoint(point, for: target)
-                selectionTarget = nil
+            .navigationDestination(isPresented: $viewModel.showsCarriers) {
+                if let origin = viewModel.origin, let destination = viewModel.destination {
+                    CarrierListView(
+                        viewModel: container.makeCarrierListViewModel(origin: origin, destination: destination)
+                    )
+                }
             }
         }
-    }
-
-    private func setRoutePoint(_ point: RoutePoint, for target: RouteSelectionTarget) {
-        switch target {
-        case .origin:
-            origin = point
-        case .destination:
-            destination = point
+        .toolbar(.hidden, for: .navigationBar)
+        .fullScreenCover(item: $viewModel.selectionTarget) { target in
+            CitySelectionFlow(viewModel: container.makeCitySelectionViewModel()) { point in
+                viewModel.select(point, for: target)
+            }
         }
     }
 }

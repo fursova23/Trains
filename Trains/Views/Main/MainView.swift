@@ -1,32 +1,23 @@
 import SwiftUI
 
 struct MainView: View {
-    @ObservedObject var viewModel: TravelScheduleViewModel
-    @Binding var origin: RoutePoint?
-    @Binding var destination: RoutePoint?
+    @ObservedObject private var viewModel: MainViewModel
 
-    let onSelectOrigin: () -> Void
-    let onSelectDestination: () -> Void
-
-    @State private var showsCarriers = false
-
-    private var isRouteComplete: Bool {
-        origin != nil && destination != nil
+    init(viewModel: MainViewModel) {
+        self.viewModel = viewModel
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            StoriesCollectionView(stories: Story.mocks)
+            StoriesCollectionView(stories: viewModel.stories)
                 .padding(.top, 24)
 
             routeSelector
                 .padding(.horizontal, 16)
                 .padding(.top, 44)
 
-            if isRouteComplete {
-                Button {
-                    showsCarriers = true
-                } label: {
+            if viewModel.isRouteComplete {
+                Button(action: viewModel.search) {
                     Text("Найти")
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(.white)
@@ -42,39 +33,30 @@ struct MainView: View {
         }
         .background(Color(uiColor: .systemBackground))
         .toolbar(.hidden, for: .navigationBar)
-        .navigationDestination(isPresented: $showsCarriers) {
-            if let origin, let destination {
-                CarrierListView(
-                    viewModel: viewModel,
-                    origin: origin,
-                    destination: destination
-                )
-            }
-        }
     }
 
     private var routeSelector: some View {
         HStack(spacing: 16) {
             VStack(spacing: 0) {
                 routeButton(
-                    title: origin?.title ?? "Откуда",
-                    isPlaceholder: origin == nil,
-                    action: onSelectOrigin
+                    title: viewModel.origin?.title ?? "Откуда",
+                    isPlaceholder: viewModel.origin == nil,
+                    action: { viewModel.beginSelection(.origin) }
                 )
+                .accessibilityIdentifier("originField")
 
                 routeButton(
-                    title: destination?.title ?? "Куда",
-                    isPlaceholder: destination == nil,
-                    action: onSelectDestination
+                    title: viewModel.destination?.title ?? "Куда",
+                    isPlaceholder: viewModel.destination == nil,
+                    action: { viewModel.beginSelection(.destination) }
                 )
+                .accessibilityIdentifier("destinationField")
             }
             .frame(maxWidth: .infinity)
             .background(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
 
-            Button {
-                swap(&origin, &destination)
-            } label: {
+            Button(action: viewModel.swapRoute) {
                 Image("swap_button")
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(Color("BrandBlue"))
@@ -112,24 +94,27 @@ struct MainView: View {
     }
 }
 
+#Preview("Главная без маршрута") {
+    NavigationStack {
+        MainView(viewModel: MainViewModel())
+    }
+}
+
 #Preview("Главная с маршрутом") {
     NavigationStack {
         MainView(
-            viewModel: TravelScheduleViewModel(
-                configurationError: NetworkConfigurationError.missingAPIKey
-            ),
-            origin: .constant(RoutePoint(
-                city: "Москва",
-                station: "Курский вокзал",
-                stationCode: "s2000001"
-            )),
-            destination: .constant(RoutePoint(
-                city: "Санкт Петербург",
-                station: "Балтийский вокзал",
-                stationCode: "s9602494"
-            )),
-            onSelectOrigin: {},
-            onSelectDestination: {}
+            viewModel: MainViewModel(
+                origin: RoutePoint(
+                    city: "Москва",
+                    station: "Курский вокзал",
+                    stationCode: "s2000001"
+                ),
+                destination: RoutePoint(
+                    city: "Санкт Петербург",
+                    station: "Балтийский вокзал",
+                    stationCode: "s9602494"
+                )
+            )
         )
     }
 }

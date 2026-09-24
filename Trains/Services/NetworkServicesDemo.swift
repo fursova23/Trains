@@ -15,49 +15,42 @@ final class NetworkServicesDemo: ObservableObject {
         }
 
         do {
-            let apiKey = try YandexRaspClientFactory.apiKey()
             let client = try YandexRaspClientFactory.makeClient()
             let date = Self.requestDateString()
 
-            let schedule = await check("Расписание рейсов между станциями") {
-                try await ScheduleBetweenStationsService(client: client, apiKey: apiKey)
-                    .getSchedule(from: "c213", to: "c2", date: date)
+            async let scheduleCheck = check("Расписание рейсов между станциями") {
+                try await client.getSchedule(from: "c213", to: "c2", date: date)
             }
 
-            let stationSchedule = await check("Расписание рейсов по станции") {
-                try await StationScheduleService(client: client, apiKey: apiKey)
-                    .getSchedule(station: "s9600213", date: date)
+            async let stationScheduleCheck = check("Расписание рейсов по станции") {
+                try await client.getSchedule(station: "s9600213", date: date)
             }
 
+            let (schedule, stationSchedule) = await (scheduleCheck, stationScheduleCheck)
             let routeUID = schedule?.segments?.first?.thread?.uid
                 ?? stationSchedule?.schedule?.first?.thread?.uid
             if let routeUID {
                 await check("Список станций следования") {
-                    try await RouteStationsService(client: client, apiKey: apiKey)
-                        .getRouteStations(uid: routeUID, date: date)
+                    try await client.getRouteStations(uid: routeUID, date: date)
                 }
             } else {
                 append("Список станций следования: API не вернул актуальный uid")
             }
 
             await check("Список ближайших станций") {
-                try await NearestStationsService(client: client, apiKey: apiKey)
-                    .getNearestStations(lat: 55.7558, lng: 37.6173, distance: 10)
+                try await client.getNearestStations(lat: 55.7558, lng: 37.6173, distance: 10)
             }
 
             await check("Ближайший город") {
-                try await NearestSettlementService(client: client, apiKey: apiKey)
-                    .getNearestSettlement(lat: 55.7558, lng: 37.6173)
+                try await client.getNearestSettlement(lat: 55.7558, lng: 37.6173)
             }
 
             await check("Информация о перевозчике") {
-                try await CarrierInfoService(client: client, apiKey: apiKey)
-                    .getCarrier(code: "SU", system: "iata")
+                try await client.getCarrier(code: "SU", system: "iata")
             }
 
             await check("Копирайт") {
-                try await CopyrightService(client: client, apiKey: apiKey)
-                    .getCopyright()
+                try await client.getCopyright()
             }
 
         } catch {
@@ -71,12 +64,10 @@ final class NetworkServicesDemo: ObservableObject {
         defer { isRunning = false }
 
         do {
-            let apiKey = try YandexRaspClientFactory.apiKey()
             let client = try YandexRaspClientFactory.makeClient()
 
             await check("Полный список станций") {
-                try await AllStationsService(client: client, apiKey: apiKey)
-                    .getAllStations()
+                try await client.getAllStations()
             }
         } catch {
             append("❌ Ошибка конфигурации: \(error.localizedDescription)")
@@ -84,7 +75,7 @@ final class NetworkServicesDemo: ObservableObject {
     }
 
     @discardableResult
-    private func check<Value>(_ name: String, operation: () async throws -> Value) async -> Value? {
+    private func check<Value: Sendable>(_ name: String, operation: () async throws -> Value) async -> Value? {
         do {
             let value = try await operation()
             append("✅ \(name)")

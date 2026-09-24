@@ -1,10 +1,10 @@
 import Foundation
 
-protocol ScheduleRepositoryProtocol {
+protocol ScheduleRepositoryProtocol: Sendable {
     func fetchTrips(from: String, to: String, date: Date) async throws -> [CarrierTrip]
 }
 
-final class ScheduleRepository: ScheduleRepositoryProtocol {
+actor ScheduleRepository: ScheduleRepositoryProtocol {
     private let scheduleService: ScheduleBetweenStationsServiceProtocol
     private let carrierTripMapper: CarrierTripMapping
 

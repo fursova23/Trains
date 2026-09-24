@@ -1,17 +1,20 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage(AppSettings.darkThemeKey) private var isDarkThemeEnabled = false
-    @State private var showsAgreement = false
+    @ObservedObject private var viewModel: SettingsViewModel
+
+    init(viewModel: SettingsViewModel) {
+        self.viewModel = viewModel
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            Toggle("Темная тема", isOn: $isDarkThemeEnabled)
+            Toggle("Темная тема", isOn: $viewModel.isDarkThemeEnabled)
                 .tint(Color("BrandBlue"))
                 .frame(minHeight: 60)
                 .accessibilityIdentifier("darkThemeToggle")
 
-            Button { showsAgreement = true } label: {
+            Button(action: viewModel.showAgreement) {
                 HStack {
                     Text("Пользовательское соглашение")
                     Spacer(minLength: 8)
@@ -39,11 +42,26 @@ struct SettingsView: View {
         .padding(.horizontal, 16)
         .padding(.top, 24)
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
-        .fullScreenCover(isPresented: $showsAgreement) {
+        .fullScreenCover(isPresented: $viewModel.showsAgreement) {
             UserAgreementView()
-                .preferredColorScheme(isDarkThemeEnabled ? .dark : .light)
+                .preferredColorScheme(viewModel.isDarkThemeEnabled ? .dark : .light)
         }
     }
 }
 
-#Preview { SettingsView() }
+#Preview("Настройки — светлая тема") {
+    let defaults = UserDefaults(suiteName: "SettingsPreview.\(UUID().uuidString)")!
+    let viewModel = SettingsViewModel(userDefaults: defaults)
+
+    SettingsView(viewModel: viewModel)
+        .preferredColorScheme(viewModel.isDarkThemeEnabled ? .dark : .light)
+}
+
+#Preview("Настройки — тёмная тема") {
+    let defaults = UserDefaults(suiteName: "SettingsPreview.\(UUID().uuidString)")!
+    let viewModel = SettingsViewModel(userDefaults: defaults)
+    viewModel.isDarkThemeEnabled = true
+
+    return SettingsView(viewModel: viewModel)
+        .preferredColorScheme(viewModel.isDarkThemeEnabled ? .dark : .light)
+}

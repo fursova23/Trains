@@ -1,4 +1,4 @@
-enum DeparturePeriod: String, CaseIterable, Identifiable, Hashable {
+enum DeparturePeriod: String, CaseIterable, Identifiable, Hashable, Sendable {
     case morning
     case day
     case evening

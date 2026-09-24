@@ -3,68 +3,41 @@ import SwiftUI
 struct CarrierListView: View {
     @Environment(\.dismiss) private var dismiss
 
-    @ObservedObject var viewModel: TravelScheduleViewModel
-    let origin: RoutePoint
-    let destination: RoutePoint
+    @StateObject private var viewModel: CarrierListViewModel
 
-    @State private var filter = CarrierFilter()
-
-    private var filteredTrips: [CarrierTrip] {
-        viewModel.trips.filter { trip in
-            let matchesPeriod = filter.periods.isEmpty
-                || filter.periods.contains(where: { $0.contains(hour: trip.departureHour) })
-
-            let matchesTransfer: Bool
-            switch filter.transferOption {
-            case .withTransfers:
-                matchesTransfer = trip.hasTransfer
-            case .withoutTransfers:
-                matchesTransfer = !trip.hasTransfer
-            case nil:
-                matchesTransfer = true
-            }
-
-            return matchesPeriod && matchesTransfer
-        }
+    init(viewModel: @autoclosure @escaping () -> CarrierListViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel())
     }
 
     var body: some View {
-        Group {
-            if case .failed(let errorKind) = viewModel.scheduleState {
-                ErrorStateView(kind: errorKind)
-            } else {
-                carrierListContent
+        carrierListContent
+            .background {
+                Color("ScheduleBackground")
+                    .ignoresSafeArea()
             }
-        }
-        .background {
-            Color("ScheduleBackground")
-                .ignoresSafeArea()
-        }
-        .toolbar(.hidden, for: .navigationBar)
-        .toolbar(.hidden, for: .tabBar)
-        .task(id: "\(origin.stationCode)-\(destination.stationCode)") {
-            await viewModel.loadSchedule(from: origin, to: destination)
-        }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if viewModel.scheduleState == .loaded {
-                NavigationLink {
-                    FiltersView(filter: $filter)
-                } label: {
-                    Text("Уточнить время")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(Color("BrandBlue"))
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .toolbar(.hidden, for: .navigationBar)
+            .toolbar(.hidden, for: .tabBar)
+            .task(id: viewModel.loadID) { await viewModel.load() }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if viewModel.state == .loaded {
+                    NavigationLink {
+                        FiltersView(filter: $viewModel.filter)
+                    } label: {
+                        Text("Уточнить время")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 60)
+                            .background(Color("BrandBlue"))
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
+                    .background(Color("ScheduleBackground"))
                 }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 8)
-                .background(Color("ScheduleBackground"))
             }
-        }
     }
 
     private var carrierListContent: some View {
@@ -75,7 +48,7 @@ struct CarrierListView: View {
             }
             .padding(.horizontal, 4)
 
-            Text("\(origin.title) → \(destination.title)")
+            Text(viewModel.routeTitle)
                 .font(.system(size: 24, weight: .bold))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
@@ -83,9 +56,14 @@ struct CarrierListView: View {
                 .padding(.bottom, 20)
 
             CarrierListContentView(
-                state: viewModel.scheduleState,
-                trips: filteredTrips
+                state: viewModel.state,
+                trips: viewModel.filteredTrips
             )
+
+            if case .failed = viewModel.state {
+                Button("Повторить", action: viewModel.retry)
+                    .padding(.bottom, 24)
+            }
         }
     }
 }

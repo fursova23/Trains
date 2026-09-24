@@ -1,6 +1,6 @@
 import Foundation
 
-protocol AllStationsMapping {
+protocol AllStationsMapping: Sendable {
     func map(_ response: AllStations) -> [City]
 }
 

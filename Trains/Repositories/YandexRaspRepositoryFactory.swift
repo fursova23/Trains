@@ -1,4 +1,6 @@
-struct YandexRaspRepositories {
+import Foundation
+
+struct YandexRaspRepositories: Sendable {
     let stationCatalog: StationCatalogRepositoryProtocol
     let schedule: ScheduleRepositoryProtocol
     let carrierDetails: CarrierDetailsRepositoryProtocol
@@ -7,17 +9,16 @@ struct YandexRaspRepositories {
 enum YandexRaspRepositoryFactory {
     static func makeRepositories() throws -> YandexRaspRepositories {
         let client = try YandexRaspClientFactory.makeClient()
-        let apiKey = try YandexRaspClientFactory.apiKey()
 
         return YandexRaspRepositories(
             stationCatalog: StationCatalogRepository(
-                allStationsService: AllStationsService(client: client, apiKey: apiKey)
+                allStationsService: client
             ),
             schedule: ScheduleRepository(
-                scheduleService: ScheduleBetweenStationsService(client: client, apiKey: apiKey)
+                scheduleService: client
             ),
             carrierDetails: CarrierDetailsRepository(
-                service: CarrierInfoService(client: client, apiKey: apiKey)
+                service: client
             )
         )
     }
